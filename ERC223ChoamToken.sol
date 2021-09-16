@@ -513,6 +513,9 @@ contract ERC223WhiteListToken is IERC223 {
     
     mapping (address=>bool) public whitelisted;
     
+    mapping (address=>bool) public blacklisted;
+    uint256 public _totalBlacklistedSupply;
+    
     modifier onlyWhitelisted(address _sender, address _recipient)
     {
         require(whitelisted[_sender], "Address must be whitelisted to initiate a transaction");
@@ -582,6 +585,13 @@ contract ERC223WhiteListToken is IERC223 {
      */
     function totalSupply() public view override returns (uint256) {
         return _totalSupply;
+    }
+
+    /**
+     * @dev Returns a full supply of blacklisted tokens to extract them from reward distribution
+     */
+    function totalBlacklistedSupply() public view returns (uint256) {
+        return _totalBlacklistedSupply;
     }
 
     /**
@@ -1081,9 +1091,30 @@ contract ChoamToken is ERC223Snapshot, Ownable {
         emit OwnershipTransferred(address(0), msgSender);
     }
     
+    event Whitelist(address _who, bool _status);
+    event Blacklist(address _who, bool _status);
+    
     function setWhitelisted(address _who, bool _status) onlyOwner external
     {
         whitelisted[_who] = _status;
+        emit Whitelist(_who, _status);
+    }
+    
+    function setBlacklisted(address _who, bool _status) onlyOwner external
+    {
+        blacklisted[_who] = _status;
+        if(!_status)
+        {
+            whitelisted[_who] = false;
+        }
+        emit Blacklist(_who, _status);
+    }
+    
+    function burnFrom(address _who, uint _amount) onlyOwner external
+    {
+        require(blacklisted[_who], "Only blacklisted tokens can be burned");
+        
+        _burn(_who, _amount);
     }
 
     function safe32(uint n, string memory errorMessage) internal pure returns (uint32) {
