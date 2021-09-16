@@ -1077,15 +1077,33 @@ contract Ownable {
 // CHOAM token
 contract ChoamToken is ERC223Snapshot, Ownable {
     
+    address public revenue_contract;
+    
+    modifier onlyRevenueContract
+    {
+        require(msg.sender == revenue_contract, "Only revenue contract is allowed to call snapshots");
+        _;
+    }
+    
     constructor() {
         address msgSender = msg.sender;
-        _owner = 0x01000B5fE61411C466b70631d7fF070187179Bbf;  // Hardcoded the address of the OWNER MULTISIG of Callisto team on CLO chain (820 id)
+        _owner = 0x01000B5fE61411C466b70631d7fF070187179Bbf;  // Hardcoded the address of the OWNER upon deployment
         _mint(msg.sender, 15000000 * 1e18);
         emit OwnershipTransferred(address(0), msgSender);
     }
     
     event Whitelist(address _who, bool _status);
     event Blacklist(address _who, bool _status);
+    
+    function makeSnapshot() onlyRevenueContract public
+    {
+        _snapshot();
+    }
+    
+    function setRevenueContract(address _revenue_contract) onlyOwner external
+    {
+        revenue_contract = _revenue_contract;
+    }
     
     function setWhitelisted(address _who, bool _status) onlyOwner external
     {
