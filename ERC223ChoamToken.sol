@@ -916,7 +916,7 @@ abstract contract ERC223Snapshot is ERC223WhiteListToken("CHOAM token", "CHOAM",
     /**
      * @dev Get the current snapshotId
      */
-    function _getCurrentSnapshotId() internal view virtual returns (uint256) {
+    function _getCurrentSnapshotId() public view returns (uint256) {
         return _currentSnapshotId.current();
     }
 
@@ -1137,5 +1137,35 @@ contract ChoamToken is ERC223Snapshot, Ownable {
         uint256 chainId;
         assembly { chainId := chainid() }
         return chainId;
+    }
+}
+
+contract RevenueContract is Ownable {
+    address public token_contract;
+    
+    mapping (uint256 => uint256) public reward_at_round;
+    
+    mapping (address => mapping (uint256 => bool)) public paid_rewards;
+    
+    function setTokenContract(address new_token_contract) onlyOwner external
+    {
+        token_contract = new_token_contract;
+    }
+    
+    function nextPaymentRound() onlyOwner external payable
+    {
+        ChoamToken(token_contract).makeSnapshot();
+        reward_at_round[ChoamToken(token_contract)._getCurrentSnapshotId()] = msg.value;
+    }
+    
+    function claimReward(uint256 _round) external payable
+    {
+        require(!paid_rewards[msg.sender][_round], "Reward for this round was already paid to this address");
+        
+        uint256 _reward;
+        
+        _reward = reward_at_round[_round] * ChoamToken(token_contract).balanceOfAt(msg.sender, _round) / ChoamToken(token_contract).totalSupplyAt(_round);
+        
+        payable(msg.sender).transfer(_reward);
     }
 }
