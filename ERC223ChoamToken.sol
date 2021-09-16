@@ -431,7 +431,7 @@ abstract contract IERC223Recipient {
 
 
 /**
- * @dev Interface of the ERC20 standard as defined in the EIP.
+ * @dev Interface of the ERC223 standard as defined in the EIP.
  */
 interface IERC223 {
     /**
@@ -566,26 +566,26 @@ contract ERC223WhiteListToken is IERC223 {
      * be displayed to a user as `5,05` (`505 / 10 ** 2`).
      *
      * Tokens usually opt for a value of 18, imitating the relationship between
-     * Ether and Wei. This is the value {ERC20} uses, unless {_setupDecimals} is
+     * Ether and Wei. This is the value {ERC223} uses, unless {_setupDecimals} is
      * called.
      *
      * NOTE: This information is only used for _display_ purposes: it in
      * no way affects any of the arithmetic of the contract, including
-     * {IERC20-balanceOf} and {IERC20-transfer}.
+     * {IERC223-balanceOf} and {IERC223-transfer}.
      */
     function decimals() public view returns (uint8) {
         return _decimals;
     }
 
     /**
-     * @dev See {IERC20-totalSupply}.
+     * @dev See {IERC223-totalSupply}.
      */
     function totalSupply() public view override returns (uint256) {
         return _totalSupply;
     }
 
     /**
-     * @dev See {IERC20-balanceOf}.
+     * @dev See {IERC223-balanceOf}.
      */
     function balanceOf(address account) public view override returns (uint256) {
         return _balances[account];
@@ -619,14 +619,14 @@ contract ERC223WhiteListToken is IERC223 {
     }
 
     /**
-     * @dev See {IERC20-allowance}.
+     * @dev See {IERC223-allowance}.
      */
     function allowance(address owner, address spender) public view virtual override returns (uint256) {
         return _allowances[owner][spender];
     }
 
     /**
-     * @dev See {IERC20-approve}.
+     * @dev See {IERC223-approve}.
      *
      * Requirements:
      *
@@ -638,10 +638,10 @@ contract ERC223WhiteListToken is IERC223 {
     }
 
     /**
-     * @dev See {IERC20-transferFrom}.
+     * @dev See {IERC223-transferFrom}.
      *
      * Emits an {Approval} event indicating the updated allowance. This is not
-     * required by the EIP. See the note at the beginning of {ERC20};
+     * required by the EIP. See the note at the beginning of {ERC223};
      *
      * Requirements:
      * - `sender` and `recipient` cannot be the zero address.
@@ -651,7 +651,7 @@ contract ERC223WhiteListToken is IERC223 {
      */
     function transferFrom(address sender, address recipient, uint256 amount) public virtual onlyWhitelisted(sender, recipient) override returns (bool) {
         _transferFrom(sender, recipient, amount);
-        _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "ERC20: transfer amount exceeds allowance"));
+        _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "ERC223: transfer amount exceeds allowance"));
         return true;
     }
 
@@ -659,7 +659,7 @@ contract ERC223WhiteListToken is IERC223 {
      * @dev Atomically increases the allowance granted to `spender` by the caller.
      *
      * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
+     * problems described in {IERC223-approve}.
      *
      * Emits an {Approval} event indicating the updated allowance.
      *
@@ -676,7 +676,7 @@ contract ERC223WhiteListToken is IERC223 {
      * @dev Atomically decreases the allowance granted to `spender` by the caller.
      *
      * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
+     * problems described in {IERC223-approve}.
      *
      * Emits an {Approval} event indicating the updated allowance.
      *
@@ -687,7 +687,7 @@ contract ERC223WhiteListToken is IERC223 {
      * `subtractedValue`.
      */
     function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
-        _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
+        _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue, "ERC223: decreased allowance below zero"));
         return true;
     }
 
@@ -742,7 +742,7 @@ contract ERC223WhiteListToken is IERC223 {
      * - `to` cannot be the zero address.
      */
     function _mint(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: mint to the zero address");
+        require(account != address(0), "ERC223: mint to the zero address");
 
         _beforeTokenTransfer(address(0), account, amount);
 
@@ -763,11 +763,11 @@ contract ERC223WhiteListToken is IERC223 {
      * - `account` must have at least `amount` tokens.
      */
     function _burn(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: burn from the zero address");
+        require(account != address(0), "ERC223: burn from the zero address");
 
         _beforeTokenTransfer(account, address(0), amount);
 
-        _balances[account] = _balances[account].sub(amount, "ERC20: burn amount exceeds balance");
+        _balances[account] = _balances[account].sub(amount, "ERC223: burn amount exceeds balance");
         _totalSupply = _totalSupply.sub(amount);
         emit Transfer(account, address(0), amount);
     }
@@ -786,8 +786,8 @@ contract ERC223WhiteListToken is IERC223 {
      * - `spender` cannot be the zero address.
      */
     function _approve(address owner, address spender, uint256 amount) internal virtual {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
+        require(owner != address(0), "ERC223: approve from the zero address");
+        require(spender != address(0), "ERC223: approve to the zero address");
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
@@ -825,13 +825,13 @@ contract ERC223WhiteListToken is IERC223 {
 
 
 /**
- * @dev This contract extends an ERC20 token with a snapshot mechanism. When a snapshot is created, the balances and
+ * @dev This contract extends an ERC223 token with a snapshot mechanism. When a snapshot is created, the balances and
  * total supply at the time are recorded for later access.
  *
  * This can be used to safely create mechanisms based on token balances such as trustless dividends or weighted voting.
  * In naive implementations it's possible to perform a "double spend" attack by reusing the same balance from different
  * accounts. By using snapshots to calculate dividends or voting power, those attacks no longer apply. It can also be
- * used to create an efficient ERC20 forking mechanism.
+ * used to create an efficient ERC223 forking mechanism.
  *
  * Snapshots are created by the internal {_snapshot} function, which will emit the {Snapshot} event and return a
  * snapshot id. To get the total supply at the time of a snapshot, call the function {totalSupplyAt} with the snapshot
@@ -843,7 +843,7 @@ contract ERC223WhiteListToken is IERC223 {
  * function, be careful about the monotonicity of its result. Non-monotonic snapshot ids will break the contract.
  *
  * Implementing snapshots for every block using this method will incur significant gas costs. For a gas-efficient
- * alternative consider {ERC20Votes}.
+ * alternative consider {ERC223Votes}.
  *
  * ==== Gas Costs
  *
@@ -851,7 +851,7 @@ contract ERC223WhiteListToken is IERC223 {
  * n)_ in the number of snapshots that have been created, although _n_ for a specific account will generally be much
  * smaller since identical balances in subsequent snapshots are stored as a single entry.
  *
- * There is a constant overhead for normal ERC20 transfers due to the additional snapshot bookkeeping. This overhead is
+ * There is a constant overhead for normal ERC223 transfers due to the additional snapshot bookkeeping. This overhead is
  * only significant for the first transfer that immediately follows a snapshot for a particular account. Subsequent
  * transfers will have normal cost until the next snapshot, and so on.
  */
@@ -896,7 +896,7 @@ abstract contract ERC223Snapshot is ERC223WhiteListToken("CHOAM token", "CHOAM")
      *
      * First, it can be used to increase the cost of retrieval of values from snapshots, although it will grow
      * logarithmically thus rendering this attack ineffective in the long term. Second, it can be used to target
-     * specific accounts and increase the cost of ERC20 transfers for them, in the ways specified in the Gas Costs
+     * specific accounts and increase the cost of ERC223 transfers for them, in the ways specified in the Gas Costs
      * section above.
      *
      * We haven't measured the actual numbers; if this is something you're interested in please reach out to us.
@@ -960,8 +960,8 @@ abstract contract ERC223Snapshot is ERC223WhiteListToken("CHOAM token", "CHOAM")
     }
 
     function _valueAt(uint256 snapshotId, Snapshots storage snapshots) private view returns (bool, uint256) {
-        require(snapshotId > 0, "ERC20Snapshot: id is 0");
-        require(snapshotId <= _getCurrentSnapshotId(), "ERC20Snapshot: nonexistent id");
+        require(snapshotId > 0, "ERC223Snapshot: id is 0");
+        require(snapshotId <= _getCurrentSnapshotId(), "ERC223Snapshot: nonexistent id");
 
         // When a valid snapshot is queried, there are three possibilities:
         //  a) The queried value was not modified after the snapshot was taken. Therefore, a snapshot entry was never
