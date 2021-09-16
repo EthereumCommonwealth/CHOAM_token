@@ -542,9 +542,10 @@ contract ERC223WhiteListToken is IERC223 {
      * construction.
      */
      
-    constructor(string memory new_name, string memory new_symbol) {
+    constructor(string memory new_name, string memory new_symbol, uint8 new_decimals) {
         _name = new_name;
         _symbol = new_symbol;
+        _decimals = new_decimals;
     }
 
     /**
@@ -584,13 +585,6 @@ contract ERC223WhiteListToken is IERC223 {
      */
     function totalSupply() public view override returns (uint256) {
         return _totalSupply;
-    }
-
-    /**
-     * @dev Returns a full supply of blacklisted tokens to extract them from reward distribution
-     */
-    function totalBlacklistedSupply() public view returns (uint256) {
-        return _totalBlacklistedSupply;
     }
 
     /**
@@ -865,7 +859,7 @@ contract ERC223WhiteListToken is IERC223 {
  * transfers will have normal cost until the next snapshot, and so on.
  */
 
-abstract contract ERC223Snapshot is ERC223WhiteListToken("CHOAM token", "CHOAM") {
+abstract contract ERC223Snapshot is ERC223WhiteListToken("CHOAM token", "CHOAM", 18) {
     // Inspired by Jordi Baylina's MiniMeToken to record historical balances:
     // https://github.com/Giveth/minimd/blob/ea04d950eea153a04c51fa510b068b9dded390cb/contracts/MiniMeToken.sol
 
