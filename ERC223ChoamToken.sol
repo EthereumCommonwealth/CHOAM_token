@@ -1142,9 +1142,7 @@ contract ChoamToken is ERC223Snapshot, Ownable {
 
 contract RevenueContract is Ownable {
     address public token_contract;
-    
     mapping (uint256 => uint256) public reward_at_round;
-    
     mapping (address => mapping (uint256 => bool)) public paid_rewards;
     
     function setTokenContract(address new_token_contract) onlyOwner external
