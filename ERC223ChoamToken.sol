@@ -514,7 +514,6 @@ contract ERC223WhiteListToken is IERC223 {
     mapping (address=>bool) public whitelisted;
     
     mapping (address=>bool) public blacklisted;
-    uint256 public _totalBlacklistedSupply;
     
     modifier onlyWhitelisted(address _sender, address _recipient)
     {
