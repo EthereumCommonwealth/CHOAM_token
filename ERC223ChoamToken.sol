@@ -1145,6 +1145,8 @@ contract RevenueContract is Ownable {
     mapping (uint256 => uint256) public reward_at_round;
     mapping (address => mapping (uint256 => bool)) public paid_rewards;
     
+    uint256 public last_round;
+    
     function setTokenContract(address new_token_contract) onlyOwner external
     {
         token_contract = new_token_contract;
@@ -1154,14 +1156,15 @@ contract RevenueContract is Ownable {
     {
         ChoamToken(token_contract).makeSnapshot();
         reward_at_round[ChoamToken(token_contract)._getCurrentSnapshotId()] = msg.value;
+        last_round++;
     }
     
     function claimReward(uint256 _round) external payable
     {
         require(!paid_rewards[msg.sender][_round], "Reward for this round was already paid to this address");
+        require(_round <= last_round, "Rewards can be claimed for completed rounds only");
         
         uint256 _reward;
-        
         _reward = reward_at_round[_round] * ChoamToken(token_contract).balanceOfAt(msg.sender, _round) / ChoamToken(token_contract).totalSupplyAt(_round);
         
         payable(msg.sender).transfer(_reward);
