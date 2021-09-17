@@ -426,7 +426,7 @@ abstract contract IERC223Recipient {
  * @param _value Amount of tokens.
  * @param _data  Transaction metadata.
  */
-    function tokenFallback(address _from, uint _value, bytes memory _data) external virtual returns (bool);
+    function tokenReceived(address _from, uint _value, bytes memory _data) external virtual returns (bool);
 }
 
 
@@ -716,7 +716,7 @@ contract ERC223WhiteListToken is IERC223 {
         
         if(recipient.isContract())
         {
-            IERC223Recipient(recipient).tokenFallback(sender, amount, data);
+            IERC223Recipient(recipient).tokenReceived(sender, amount, data);
         }
 
         _balances[sender] = _balances[sender].sub(amount, "ERC223: transfer amount exceeds balance");
