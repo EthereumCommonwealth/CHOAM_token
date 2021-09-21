@@ -1087,7 +1087,7 @@ contract ChoamToken is ERC223Snapshot, Ownable {
     
     constructor() {
         address msgSender = msg.sender;
-        _owner = 0x01000B5fE61411C466b70631d7fF070187179Bbf;  // Hardcoded the address of the OWNER upon deployment
+        _owner = msg.sender; 
         _mint(msg.sender, 15000000 * 1e18);
         emit OwnershipTransferred(address(0), msgSender);
     }
