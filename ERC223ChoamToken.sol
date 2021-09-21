@@ -1158,7 +1158,7 @@ contract RevenueContract is Ownable {
         token_contract = new_token_contract;
     }
     
-    function nextPaymentRoundSnapshot() onlyOwner external payable
+    function nextPaymentRoundSnapshot() onlyOwner external
     {
         ChoamToken(token_contract).makeSnapshot();
         last_round++;
