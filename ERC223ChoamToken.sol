@@ -1142,7 +1142,8 @@ contract ChoamToken is ERC223Snapshot, Ownable {
 
 contract RevenueContract is Ownable {
     address public token_contract;
-    mapping (uint256 => uint256) public reward_at_round;
+    mapping (uint256 => uint256)                   public reward_at_round;
+    mapping (uint256 => bool)                      public claimable;
     mapping (address => mapping (uint256 => bool)) public paid_rewards;
     
     uint256 public last_round;
@@ -1152,21 +1153,32 @@ contract RevenueContract is Ownable {
         token_contract = new_token_contract;
     }
     
-    function nextPaymentRound() onlyOwner external payable
+    function nextPaymentRoundSnapshot() onlyOwner external payable
     {
         ChoamToken(token_contract).makeSnapshot();
-        reward_at_round[ChoamToken(token_contract)._getCurrentSnapshotId()] = msg.value;
         last_round++;
+    }
+    
+    function depositReward(uint256 _round_id) onlyOwner external payable
+    {
+        reward_at_round[_round_id] = msg.value;
+        claimable[_round_id] = true;
     }
     
     function claimReward(uint256 _round) external payable
     {
         require(!paid_rewards[msg.sender][_round], "Reward for this round was already paid to this address");
         require(_round <= last_round, "Rewards can be claimed for completed rounds only");
+        require(claimable[_round], "The reward for this round is not yet deposited");
         
         uint256 _reward;
         _reward = reward_at_round[_round] * ChoamToken(token_contract).balanceOfAt(msg.sender, _round) / ChoamToken(token_contract).totalSupplyAt(_round);
         
         payable(msg.sender).transfer(_reward);
+    }
+    
+    function rewardForRound(address _who, uint256 _round) public view returns (uint256 _reward, bool _claimed_already)
+    {
+        return (reward_at_round[_round] * ChoamToken(token_contract).balanceOfAt(_who, _round) / ChoamToken(token_contract).totalSupplyAt(_round), paid_rewards[_who][_round]);
     }
 }
