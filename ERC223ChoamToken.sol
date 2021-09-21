@@ -1148,6 +1148,11 @@ contract RevenueContract is Ownable {
     
     uint256 public last_round;
     
+    constructor() {
+        _owner = msg.sender; 
+        emit OwnershipTransferred(address(0), msg.sender);
+    }
+    
     function setTokenContract(address new_token_contract) onlyOwner external
     {
         token_contract = new_token_contract;
