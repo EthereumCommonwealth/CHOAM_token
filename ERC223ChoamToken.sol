@@ -1190,6 +1190,20 @@ contract RevenueContract is Ownable {
         emit RewardClaimed(msg.sender, _round, _reward);
     }
     
+    function claimRewardForUser(address _who, uint256 _round) external
+    {
+        require(!paid_rewards[_who][_round], "Reward for this round was already paid to this address");
+        require(_round <= last_round, "Rewards can be claimed for completed rounds only");
+        require(claimable[_round], "The reward for this round is not yet deposited");
+        
+        uint256 _reward;
+        _reward = reward_at_round[_round] * ChoamToken(token_contract).balanceOfAt(_who, _round) / ChoamToken(token_contract).totalSupplyAt(_round);
+        
+        payable(_who).transfer(_reward);
+        
+        emit RewardClaimed(_who, _round, _reward);
+    }
+    
     function rewardForRound(address _who, uint256 _round) public view returns (uint256 _reward, bool _claimed_already)
     {
         return (reward_at_round[_round] * ChoamToken(token_contract).balanceOfAt(_who, _round) / ChoamToken(token_contract).totalSupplyAt(_round), paid_rewards[_who][_round]);
