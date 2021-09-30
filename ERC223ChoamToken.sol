@@ -1114,7 +1114,7 @@ contract ChoamToken is ERC223Snapshot, Ownable {
     function setBlacklisted(address _who, bool _status) onlyOwner external
     {
         blacklisted[_who] = _status;
-        if(!_status)
+        if(_status)
         {
             whitelisted[_who] = false;
         }
