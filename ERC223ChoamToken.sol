@@ -349,19 +349,79 @@ interface IERC223 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract ERC223WhiteListToken is IERC223 {
-    using Address for address;
-    
-    mapping (address=>bool) public whitelisted;
-    
-    mapping (address=>bool) public blacklisted;
-    
-    modifier onlyWhitelisted(address _sender, address _recipient)
-    {
-        require(whitelisted[_sender], "Address must be whitelisted to initiate a transaction");
-        require(whitelisted[_recipient], "Address must be whitelisted to receive a transaction");
+/**
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+ *
+ * By default, the owner account will be the one that deploys the contract. This
+ * can later be changed with {transferOwnership}.
+ *
+ * This module is used through inheritance. It will make available the modifier
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
+ */
+abstract contract Ownable {
+    address private _owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev Initializes the contract setting the deployer as the initial owner.
+     */
+    constructor () {
+        _owner = msg.sender;
+        emit OwnershipTransferred(address(0), msg.sender);
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(_owner == msg.sender, "Ownable: caller is not the owner");
         _;
     }
+
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
+    }
+}
+
+interface IWhitelist {
+    function onlyWhitelisted(address _sender, address _recipient) external view returns (bool);
+    function isWhitelisted(address _who) external view returns (bool);
+    function isBlacklisted(address _who) external view returns (bool);
+}
+
+contract ERC223WhiteListToken is IERC223, Ownable {
+    using Address for address;
+
+    IWhitelist public whitelistContract;
 
     mapping (address => uint256) private _balances;
 
@@ -372,6 +432,8 @@ contract ERC223WhiteListToken is IERC223 {
     string private _name;
     string private _symbol;
     uint8 private _decimals;
+
+    event SetWhitelistContract(address oldWhitelistContract, address newWhitelistContract);
 
     /**
      * @dev Sets the values for {name} and {symbol}, initializes {decimals} with
@@ -387,6 +449,11 @@ contract ERC223WhiteListToken is IERC223 {
         _name = new_name;
         _symbol = new_symbol;
         _decimals = new_decimals;
+    }
+
+    function setWhitelistContract(address _whitelistContract) onlyOwner external {
+        emit SetWhitelistContract(address(whitelistContract), _whitelistContract);
+        whitelistContract = IWhitelist(_whitelistContract);
     }
 
     /**
@@ -443,7 +510,8 @@ contract ERC223WhiteListToken is IERC223 {
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount) public virtual onlyWhitelisted(msg.sender, recipient) override returns (bool) {
+    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+        whitelistContract.onlyWhitelisted(msg.sender, recipient);
         _transfer(msg.sender, recipient, amount, new bytes(0));
         return true;
     }
@@ -457,7 +525,8 @@ contract ERC223WhiteListToken is IERC223 {
      * - the caller must have a balance of at least `amount`.
      * 
      */
-    function transfer(address recipient, uint256 amount, bytes calldata data) public virtual onlyWhitelisted(msg.sender, recipient) override returns (bool) {
+    function transfer(address recipient, uint256 amount, bytes calldata data) public virtual override returns (bool) {
+        whitelistContract.onlyWhitelisted(msg.sender, recipient);
         _transfer(msg.sender, recipient, amount, data);
         return true;
     }
@@ -493,7 +562,8 @@ contract ERC223WhiteListToken is IERC223 {
      * - the caller must have allowance for ``sender``'s tokens of at least
      * `amount`.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) public virtual onlyWhitelisted(sender, recipient) override returns (bool) {
+    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+        whitelistContract.onlyWhitelisted(sender, recipient);
         _transferFrom(sender, recipient, amount);
         _approve(sender, msg.sender, _allowances[sender][msg.sender] - amount);
         return true;
@@ -855,68 +925,8 @@ abstract contract ERC223Snapshot is ERC223WhiteListToken("CHOAM token", "CHOAM",
     }
 }
 
-/**
- * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an owner) that can be granted exclusive access to
- * specific functions.
- *
- * By default, the owner account will be the one that deploys the contract. This
- * can later be changed with {transferOwnership}.
- *
- * This module is used through inheritance. It will make available the modifier
- * `onlyOwner`, which can be applied to your functions to restrict their use to
- * the owner.
- */
-contract Ownable {
-    address public _owner;
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
-     */
-
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view returns (address) {
-        return _owner;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(_owner == msg.sender, "Ownable: caller is not the owner");
-        _;
-    }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public virtual onlyOwner {
-        emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
-    }
-}
-
-
 // CHOAM token
-contract ChoamToken is ERC223Snapshot, Ownable {
+contract ChoamToken is ERC223Snapshot {
     
     address public revenue_contract;
     
@@ -927,14 +937,8 @@ contract ChoamToken is ERC223Snapshot, Ownable {
     }
     
     constructor() {
-        address msgSender = msg.sender;
-        _owner = msg.sender; 
         _mint(msg.sender, 15000000 * 1e18);
-        emit OwnershipTransferred(address(0), msgSender);
     }
-    
-    event Whitelist(address _who, bool _status);
-    event Blacklist(address _who, bool _status);
     
     function makeSnapshot() onlyRevenueContract public
     {
@@ -946,25 +950,9 @@ contract ChoamToken is ERC223Snapshot, Ownable {
         revenue_contract = _revenue_contract;
     }
     
-    function setWhitelisted(address _who, bool _status) onlyOwner external
-    {
-        whitelisted[_who] = _status;
-        emit Whitelist(_who, _status);
-    }
-    
-    function setBlacklisted(address _who, bool _status) onlyOwner external
-    {
-        blacklisted[_who] = _status;
-        if(_status)
-        {
-            whitelisted[_who] = false;
-        }
-        emit Blacklist(_who, _status);
-    }
-    
     function burnFrom(address _who, uint _amount) onlyOwner external
     {
-        require(blacklisted[_who], "Only blacklisted tokens can be burned");
+        require(whitelistContract.isBlacklisted(_who), "Only blacklisted tokens can be burned");
         
         _burn(_who, _amount);
     }
@@ -992,11 +980,6 @@ contract RevenueContract is Ownable {
     event PaymentSnapshot(uint256 id);
     event RewardDeposited(uint256 round_id);
     event RewardClaimed(address indexed claimer, uint256 round_id, uint256 amount);
-    
-    constructor() {
-        _owner = msg.sender; 
-        emit OwnershipTransferred(address(0), msg.sender);
-    }
     
     function setTokenContract(address new_token_contract) onlyOwner external
     {
