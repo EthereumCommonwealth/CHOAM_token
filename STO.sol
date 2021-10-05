@@ -172,6 +172,7 @@ contract STO is IERC223Recipient, Ownable, ReentrancyGuard {
         system = 0xf9e7D15E0aEfd6Dd2D7e4CF3A3611d3209457067;
         bank = payable(msg.sender); // FOR TEST ONLY!!! In the release version will be assigned bank address
         emit SetSystem(system);
+        emit SetBank(bank);
     }
 
     function setSystem(address _system) onlyOwner external
@@ -212,11 +213,14 @@ contract STO is IERC223Recipient, Ownable, ReentrancyGuard {
     }
 
     function buyToken(uint256 amountCLOE) nonReentrant payable external {
+        require(msg.value != 0, "No CLO sent");
         uint256 cloValue = msg.value * CLO_USD;
         uint256 cloeValue = amountCLOE * CLOE_USD;
         uint256 totalValue = cloValue + cloeValue;
         require(cloValue * 100 / totalValue >= 95, "Only 5% can be paid by CLOE");
-        tokenCLOE.transferFrom(msg.sender, bank, amountCLOE);
+        if (amountCLOE != 0) {
+            tokenCLOE.transferFrom(msg.sender, bank, amountCLOE);
+        }
         bank.transfer(msg.value);
         uint256 stAmount = totalValue / ST_USD;
         tokenST.transfer(msg.sender, stAmount);
