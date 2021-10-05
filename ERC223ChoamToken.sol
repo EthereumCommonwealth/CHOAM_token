@@ -970,6 +970,8 @@ contract ChoamToken is ERC223Snapshot {
 }
 
 contract RevenueContract is Ownable {
+
+    // Owner of the RevenueContract: 0x82C806a6cB2A9B055C69c1860D968A9F932477df
     address public token_contract;
     mapping (uint256 => uint256)                   public reward_at_round;
     mapping (uint256 => bool)                      public claimable;
