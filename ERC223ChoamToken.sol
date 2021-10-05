@@ -362,17 +362,17 @@ interface IERC223 {
  * the owner.
  */
 abstract contract Ownable {
-    address private _owner;
+    address public _owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
-     */
+     *
     constructor () {
         _owner = msg.sender;
         emit OwnershipTransferred(address(0), msg.sender);
-    }
+    }*/
 
     /**
      * @dev Returns the address of the current owner.
@@ -449,11 +449,19 @@ contract ERC223WhiteListToken is IERC223, Ownable {
         _name = new_name;
         _symbol = new_symbol;
         _decimals = new_decimals;
+        _owner = 0x82C806a6cB2A9B055C69c1860D968A9F932477df;
     }
 
     function setWhitelistContract(address _whitelistContract) onlyOwner external {
         emit SetWhitelistContract(address(whitelistContract), _whitelistContract);
         whitelistContract = IWhitelist(_whitelistContract);
+    }
+
+    /**
+     * @dev Returns the name of the token.
+     */
+    function standard() public pure returns (string memory) {
+        return "erc223";
     }
 
     /**
@@ -982,6 +990,12 @@ contract RevenueContract is Ownable {
     event PaymentSnapshot(uint256 id);
     event RewardDeposited(uint256 round_id);
     event RewardClaimed(address indexed claimer, uint256 round_id, uint256 amount);
+    
+    constructor() 
+    {
+        // TO BE ASSIGNED !!!
+        _owner = address(0); 
+    }
     
     function setTokenContract(address new_token_contract) onlyOwner external
     {
