@@ -993,8 +993,7 @@ contract RevenueContract is Ownable {
     
     constructor() 
     {
-        // TO BE ASSIGNED !!!
-        _owner = address(0); 
+        _owner = 0xBF516C212015c0644cBF9536ddAaAd2125013CA3; 
     }
     
     function setTokenContract(address new_token_contract) onlyOwner external
