@@ -131,6 +131,7 @@ interface IERC223 {
     function transfer(address recipient, uint256 amount) external returns (bool);
     function balanceOf(address account) external view returns (uint256);
     function approve(address spender, uint256 amount) external returns (bool);
+    function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
 }
 
 
@@ -143,7 +144,7 @@ abstract contract ERC223Recipient {
  * @param _data  Transaction metadata.
  */
     function tokenReceived(address _from, uint _value, bytes memory _data) external virtual {
-        IERC223(msg.sender).approve(address(this), _value);
+        IERC223(msg.sender).increaseAllowance(address(this), _value);
     }
 }
 
