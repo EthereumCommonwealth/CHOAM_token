@@ -196,8 +196,8 @@ contract STO is ERC223Recipient, Ownable, ReentrancyGuard {
         if (address(0) == _token) {
             payable(msg.sender).transfer(address(this).balance);
         } else {
-            uint256 available = IERC20(_token).balanceOf(address(this));
-            IERC20(_token).transfer(msg.sender, available);
+            uint256 available = IERC223(_token).balanceOf(address(this));
+            IERC223(_token).transfer(msg.sender, available);
         }
     }
 
