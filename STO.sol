@@ -126,14 +126,15 @@ abstract contract ReentrancyGuard {
     }
 }
 
-interface IERC20 {
+interface IERC223 {
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
     function transfer(address recipient, uint256 amount) external returns (bool);
     function balanceOf(address account) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
 }
 
 
-abstract contract IERC223Recipient { 
+abstract contract ERC223Recipient { 
 /**
  * @dev Standard ERC223 function that will handle incoming token transfers.
  *
@@ -141,10 +142,12 @@ abstract contract IERC223Recipient {
  * @param _value Amount of tokens.
  * @param _data  Transaction metadata.
  */
-    function tokenReceived(address _from, uint _value, bytes memory _data) external virtual {}
+    function tokenReceived(address _from, uint _value, bytes memory _data) external virtual {
+        IERC223(msg.sender).approve(address(this), _value);
+    }
 }
 
-contract STO is IERC223Recipient, Ownable, ReentrancyGuard {
+contract STO is ERC223Recipient, Ownable, ReentrancyGuard {
 
     uint256 public ST_USD;      // price of 1 Security Token in USD (18 decimals)
     uint256 public CLO_USD;     // price of 1 CLO in USD (18 decimals)
@@ -153,8 +156,8 @@ contract STO is IERC223Recipient, Ownable, ReentrancyGuard {
 
     address public system;   // system wallet can change CLO and CLOE price
     address payable public bank;    // receiver of CLO and CLOE
-    IERC20 public tokenST; // Security token contract address
-    IERC20 public tokenCLOE = IERC20(0x1eAa43544dAa399b87EEcFcC6Fa579D5ea4A6187); // CLOE token contract address
+    IERC223 public tokenST; // Security token contract address
+    IERC223 public tokenCLOE = IERC223(0x1eAa43544dAa399b87EEcFcC6Fa579D5ea4A6187); // CLOE token contract address
     
     event SetSystem(address _system);
     event SetBank(address _bank);
@@ -168,7 +171,7 @@ contract STO is IERC223Recipient, Ownable, ReentrancyGuard {
     }
 
     constructor (address _tokenST) {
-        tokenST = IERC20(_tokenST);
+        tokenST = IERC223(_tokenST);
         system = 0xf9e7D15E0aEfd6Dd2D7e4CF3A3611d3209457067;
         bank = payable(msg.sender); // FOR TEST ONLY!!! In the release version will be assigned bank address
         emit SetSystem(system);
@@ -193,8 +196,8 @@ contract STO is IERC223Recipient, Ownable, ReentrancyGuard {
         if (address(0) == _token) {
             payable(msg.sender).transfer(address(this).balance);
         } else {
-            uint256 available = IERC20(_token).balanceOf(address(this));
-            IERC20(_token).transfer(msg.sender, available);
+            uint256 available = IERC223(_token).balanceOf(address(this));
+            IERC223(_token).transfer(msg.sender, available);
         }
     }
 
@@ -223,6 +226,6 @@ contract STO is IERC223Recipient, Ownable, ReentrancyGuard {
         }
         bank.transfer(msg.value);
         uint256 stAmount = totalValue / ST_USD;
-        tokenST.transfer(msg.sender, stAmount);
+        tokenST.transferFrom(address(this), msg.sender, stAmount);
     }
 }
