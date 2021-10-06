@@ -135,7 +135,7 @@ interface IERC223 {
 }
 
 
-abstract contract ERC223Recipient { 
+interface IERC223Recipient { 
 /**
  * @dev Standard ERC223 function that will handle incoming token transfers.
  *
@@ -143,12 +143,10 @@ abstract contract ERC223Recipient {
  * @param _value Amount of tokens.
  * @param _data  Transaction metadata.
  */
-    function tokenReceived(address _from, uint _value, bytes memory _data) external virtual {
-        IERC223(msg.sender).increaseAllowance(address(this), _value);
-    }
+    function tokenReceived(address _from, uint _value, bytes memory _data) external;
 }
 
-contract STO is ERC223Recipient, Ownable, ReentrancyGuard {
+contract STO is IERC223Recipient, Ownable, ReentrancyGuard {
 
     uint256 public ST_USD;      // price of 1 Security Token in USD (18 decimals)
     uint256 public CLO_USD;     // price of 1 CLO in USD (18 decimals)
@@ -177,6 +175,13 @@ contract STO is ERC223Recipient, Ownable, ReentrancyGuard {
         bank = payable(msg.sender); // FOR TEST ONLY!!! In the release version will be assigned bank address
         emit SetSystem(system);
         emit SetBank(bank);
+    }
+    
+    function tokenReceived(address _from, uint _value, bytes memory _data) external override onlyOwner {
+        require(msg.sender == address(tokenST), "Do not allow any token deposits other than STO token");
+        //require(_from == owner(), "Only owner can deposit STO tokens");
+        
+        IERC223(msg.sender).increaseAllowance(address(this), _value);
     }
 
     function setSystem(address _system) onlyOwner external
