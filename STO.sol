@@ -177,9 +177,9 @@ contract STO is IERC223Recipient, Ownable, ReentrancyGuard {
         emit SetBank(bank);
     }
     
-    function tokenReceived(address _from, uint _value, bytes memory _data) external override onlyOwner {
+    function tokenReceived(address _from, uint _value, bytes memory _data) external override {
         require(msg.sender == address(tokenST), "Do not allow any token deposits other than STO token");
-        //require(_from == owner(), "Only owner can deposit STO tokens");
+        require(_from == owner(), "Only owner can deposit STO tokens");
         
         IERC223(msg.sender).increaseAllowance(address(this), _value);
     }
