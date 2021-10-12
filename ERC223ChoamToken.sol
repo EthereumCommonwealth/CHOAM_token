@@ -1035,6 +1035,7 @@ contract RevenueContract is Ownable {
         uint256 _reward;
         _reward = reward_at_round[_round] * ChoamToken(token_contract).balanceOfAt(_who, _round) / ChoamToken(token_contract).totalSupplyAt(_round);
         
+        paid_rewards[msg.sender][_round] = true;
         payable(_who).transfer(_reward);
         
         emit RewardClaimed(_who, _round, _reward);
