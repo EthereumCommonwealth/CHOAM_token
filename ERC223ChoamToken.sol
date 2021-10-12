@@ -1004,9 +1004,14 @@ contract RevenueContract is Ownable {
         emit PaymentSnapshot(last_round);
     }
     
+    function makeUnclaimable(uint256 _round_id) onlyOwner external payable
+    {
+        claimable[_round_id] = false;
+    }
+    
     function depositReward(uint256 _round_id) onlyOwner external payable
     {
-        reward_at_round[_round_id] = msg.value;
+        reward_at_round[_round_id] += msg.value;
         claimable[_round_id] = true;
         emit RewardDeposited(_round_id);
     }
