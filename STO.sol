@@ -171,8 +171,7 @@ contract STO is IERC223Recipient, Ownable, ReentrancyGuard {
 
     constructor (address _tokenST) {
         tokenST = IERC223(_tokenST);
-        system = 0xf9e7D15E0aEfd6Dd2D7e4CF3A3611d3209457067;
-        bank = payable(msg.sender); // FOR TEST ONLY!!! In the release version will be assigned bank address
+        bank = payable(0xaf38E7104cAF6624F2A3F40A55F0156b2E56B43E);
         emit SetSystem(system);
         emit SetBank(bank);
     }
