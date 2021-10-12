@@ -341,6 +341,7 @@ interface IERC223 {
      * Note that `value` may be zero.
      */
     event Transfer(address indexed from, address indexed to, uint256 value);
+    event TransferData(bytes data);
 
     /**
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by
@@ -449,7 +450,7 @@ contract ERC223WhiteListToken is IERC223, Ownable {
         _name = new_name;
         _symbol = new_symbol;
         _decimals = new_decimals;
-        _owner = 0x82C806a6cB2A9B055C69c1860D968A9F932477df;
+        _owner = msg.sender;
     }
 
     function setWhitelistContract(address _whitelistContract) onlyOwner external {
@@ -633,14 +634,15 @@ contract ERC223WhiteListToken is IERC223, Ownable {
 
         _beforeTokenTransfer(sender, recipient, amount);
         
+        _balances[sender] = _balances[sender] - amount;
+        _balances[recipient] = _balances[recipient] + amount;
+        
         if(recipient.isContract())
         {
             IERC223Recipient(recipient).tokenReceived(sender, amount, data);
         }
-
-        _balances[sender] = _balances[sender] - amount;
-        _balances[recipient] = _balances[recipient] + amount;
         emit Transfer(sender, recipient, amount);
+        emit TransferData(data);
     }
     
     function _transferFrom(address sender, address recipient, uint256 amount) internal virtual {
@@ -964,16 +966,10 @@ contract ChoamToken is ERC223Snapshot {
         
         _burn(_who, _amount);
     }
-
-    function safe32(uint n, string memory errorMessage) internal pure returns (uint32) {
-        require(n < 2**32, errorMessage);
-        return uint32(n);
-    }
-
-    function getChainId() internal view returns (uint) {
-        uint256 chainId;
-        assembly { chainId := chainid() }
-        return chainId;
+    
+    function rescueERC20(address token, address to) external onlyOwner {
+        uint256 value = IERC223(token).balanceOf(address(this));
+        IERC223(token).transfer(to, value);
     }
 }
 
@@ -993,7 +989,7 @@ contract RevenueContract is Ownable {
     
     constructor() 
     {
-        _owner = 0xBF516C212015c0644cBF9536ddAaAd2125013CA3; 
+        _owner = msg.sender; 
     }
     
     function setTokenContract(address new_token_contract) onlyOwner external
@@ -1047,5 +1043,10 @@ contract RevenueContract is Ownable {
     function rewardForRound(address _who, uint256 _round) public view returns (uint256 _reward, bool _claimed_already)
     {
         return (reward_at_round[_round] * ChoamToken(token_contract).balanceOfAt(_who, _round) / ChoamToken(token_contract).totalSupplyAt(_round), paid_rewards[_who][_round]);
+    }
+    
+    function rescueERC20(address token, address to) external onlyOwner {
+        uint256 value = IERC223(token).balanceOf(address(this));
+        IERC223(token).transfer(to, value);
     }
 }
