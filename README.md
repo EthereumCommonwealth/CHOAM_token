@@ -1,6 +1,6 @@
 # CHOAM token
 
-Test deployment:
+Mainnet deployment:
 
 1. Whitelist Contract 0x77752Ec81870DD1DAC8ff08431BEB179364F2499: https://explorer.callisto.network/address/0x77752Ec81870DD1DAC8ff08431BEB179364F2499/
 2. ERC223 CHOAM token 0x83736D58F496afab4cF7D8453575ab59279810ec: https://explorer.callisto.network/address/0x83736D58F496afab4cF7D8453575ab59279810ec/
